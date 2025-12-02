@@ -4,6 +4,7 @@ import { z } from "zod";
 import { format } from "date-fns";
 import { CalendarIcon, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -31,9 +32,9 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { CATEGORIES, FAMILY_MEMBERS, Category, FamilyMember } from "@/types/expense";
-import { addExpense } from "@/lib/expense-storage";
+import { addExpense } from "@/lib/expense-api";
 import { toast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 const expenseSchema = z.object({
   date: z.date({
@@ -59,7 +60,8 @@ type ExpenseFormData = z.infer<typeof expenseSchema>;
 
 export function ExpenseForm() {
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const form = useForm<ExpenseFormData>({
     resolver: zodResolver(expenseSchema),
@@ -69,33 +71,37 @@ export function ExpenseForm() {
     },
   });
 
-  async function onSubmit(data: ExpenseFormData) {
-    setIsSubmitting(true);
-    try {
-      addExpense({
+  const mutation = useMutation({
+    mutationFn: async (data: ExpenseFormData) => {
+      if (!user) throw new Error("You must be logged in");
+      return addExpense({
         date: format(data.date, "yyyy-MM-dd"),
         amount: data.amount,
         category: data.category,
         paidBy: data.paidBy,
         forWhom: data.forWhom,
         notes: data.notes || "",
-      });
-
+      }, user.id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expenses'] });
       toast({
         title: "Expense added",
-        description: `₹${data.amount.toLocaleString('en-IN')} added to ${data.category}`,
+        description: "Your expense has been recorded successfully.",
       });
-
       navigate("/");
-    } catch (error) {
+    },
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to add expense. Please try again.",
+        description: error.message || "Failed to add expense. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
-    }
+    },
+  });
+
+  function onSubmit(data: ExpenseFormData) {
+    mutation.mutate(data);
   }
 
   return (
@@ -263,8 +269,8 @@ export function ExpenseForm() {
           >
             Cancel
           </Button>
-          <Button type="submit" className="flex-1" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          <Button type="submit" className="flex-1" disabled={mutation.isPending}>
+            {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Add Expense
           </Button>
         </div>

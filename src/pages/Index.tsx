@@ -1,7 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
-import { PlusCircle, Filter } from "lucide-react";
+import { useMemo } from "react";
+import { Link, Navigate } from "react-router-dom";
+import { PlusCircle, Filter, Loader2 } from "lucide-react";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,24 +18,20 @@ import { CategoryChart } from "@/components/dashboard/category-chart";
 import { TrendChart } from "@/components/dashboard/trend-chart";
 import { MemberContributions } from "@/components/dashboard/member-contributions";
 import { RecentExpenses } from "@/components/dashboard/recent-expenses";
-import { getExpenses, getExpensesByMonth } from "@/lib/expense-storage";
-import { Expense, FAMILY_MEMBERS, FamilyMember } from "@/types/expense";
+import { getExpenses } from "@/lib/expense-api";
+import { Expense, FAMILY_MEMBERS } from "@/types/expense";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Index() {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const { user, loading } = useAuth();
   const [filterMember, setFilterMember] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState<string>("current");
 
-  useEffect(() => {
-    const loadExpenses = () => {
-      const allExpenses = getExpenses();
-      setExpenses(allExpenses);
-    };
-
-    loadExpenses();
-    window.addEventListener("storage", loadExpenses);
-    return () => window.removeEventListener("storage", loadExpenses);
-  }, []);
+  const { data: expenses = [], isLoading } = useQuery({
+    queryKey: ['expenses'],
+    queryFn: getExpenses,
+    enabled: !!user,
+  });
 
   const filteredExpenses = useMemo(() => {
     let result = [...expenses];
@@ -70,8 +68,25 @@ export default function Index() {
   const previousMonthExpenses = useMemo(() => {
     const now = new Date();
     const prevMonth = subMonths(now, 1);
-    return getExpensesByMonth(prevMonth.getFullYear(), prevMonth.getMonth());
-  }, []);
+    const start = startOfMonth(prevMonth);
+    const end = endOfMonth(prevMonth);
+    return expenses.filter((e) => {
+      const date = new Date(e.date);
+      return date >= start && date <= end;
+    });
+  }, [expenses]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -123,23 +138,31 @@ export default function Index() {
           </Select>
         </div>
 
-        {/* Summary Cards */}
-        <SummaryCards
-          expenses={filteredExpenses}
-          previousMonthExpenses={previousMonthExpenses}
-        />
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <>
+            {/* Summary Cards */}
+            <SummaryCards
+              expenses={filteredExpenses}
+              previousMonthExpenses={previousMonthExpenses}
+            />
 
-        {/* Charts Grid */}
-        <div className="mt-8 grid gap-6 lg:grid-cols-2">
-          <CategoryChart expenses={filteredExpenses} />
-          <TrendChart expenses={expenses} />
-        </div>
+            {/* Charts Grid */}
+            <div className="mt-8 grid gap-6 lg:grid-cols-2">
+              <CategoryChart expenses={filteredExpenses} />
+              <TrendChart expenses={expenses} />
+            </div>
 
-        {/* Bottom Grid */}
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          <MemberContributions expenses={filteredExpenses} />
-          <RecentExpenses expenses={filteredExpenses} />
-        </div>
+            {/* Bottom Grid */}
+            <div className="mt-6 grid gap-6 lg:grid-cols-2">
+              <MemberContributions expenses={filteredExpenses} />
+              <RecentExpenses expenses={filteredExpenses} />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
