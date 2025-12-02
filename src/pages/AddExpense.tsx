@@ -1,8 +1,25 @@
+import { Navigate } from "react-router-dom";
+import { Loader2, Receipt } from "lucide-react";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExpenseForm } from "@/components/forms/expense-form";
-import { Receipt } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function AddExpense() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
