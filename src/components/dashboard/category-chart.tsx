@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Expense, Category, CATEGORY_COLORS, CATEGORIES } from "@/types/expense";
+import { Expense, Category, CATEGORY_COLORS, CATEGORIES, formatCurrency } from "@/types/expense";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { useMemo } from "react";
 
@@ -66,7 +66,7 @@ export function CategoryChart({ expenses }: CategoryChartProps) {
               ))}
             </Pie>
             <Tooltip
-              formatter={(value: number) => [`₹${value.toLocaleString('en-IN')}`, '']}
+              formatter={(value: number) => [formatCurrency(value), '']}
               contentStyle={{
                 backgroundColor: 'hsl(var(--card))',
                 border: '1px solid hsl(var(--border))',

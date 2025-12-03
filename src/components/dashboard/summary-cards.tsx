@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Expense, FamilyMember } from "@/types/expense";
+import { Expense, formatCurrency } from "@/types/expense";
 import { TrendingUp, TrendingDown, Users, Wallet } from "lucide-react";
 import { useMemo } from "react";
 
@@ -36,7 +36,7 @@ export function SummaryCards({ expenses, previousMonthExpenses = [] }: SummaryCa
   const cards = [
     {
       title: "Total Spend",
-      value: `₹${stats.totalSpend.toLocaleString('en-IN')}`,
+      value: formatCurrency(stats.totalSpend),
       subtitle: stats.changePercent !== 0 
         ? `${stats.changePercent > 0 ? '+' : ''}${stats.changePercent.toFixed(1)}% from last month`
         : "This month",
@@ -45,7 +45,7 @@ export function SummaryCards({ expenses, previousMonthExpenses = [] }: SummaryCa
     },
     {
       title: "Shared Expenses",
-      value: `₹${stats.sharedTotal.toLocaleString('en-IN')}`,
+      value: formatCurrency(stats.sharedTotal),
       subtitle: `${((stats.sharedTotal / stats.totalSpend) * 100 || 0).toFixed(0)}% of total`,
       icon: Users,
       trend: 'neutral',
@@ -53,7 +53,7 @@ export function SummaryCards({ expenses, previousMonthExpenses = [] }: SummaryCa
     {
       title: "Transactions",
       value: stats.transactionCount.toString(),
-      subtitle: `Avg ₹${stats.avgPerExpense.toLocaleString('en-IN', { maximumFractionDigits: 0 })} each`,
+      subtitle: `Avg ${formatCurrency(stats.avgPerExpense)} each`,
       icon: stats.changePercent <= 0 ? TrendingDown : TrendingUp,
       trend: 'neutral',
     },

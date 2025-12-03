@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Expense } from "@/types/expense";
+import { Expense, formatCurrency } from "@/types/expense";
 import {
   LineChart,
   Line,
@@ -77,10 +77,10 @@ export function TrendChart({ expenses }: TrendChartProps) {
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(value) => `₹${value.toLocaleString('en-IN')}`}
+                tickFormatter={(value) => formatCurrency(value)}
               />
               <Tooltip
-                formatter={(value: number) => [`₹${value.toLocaleString('en-IN')}`, 'Amount']}
+                formatter={(value: number) => [formatCurrency(value), 'Amount']}
                 contentStyle={{
                   backgroundColor: 'hsl(var(--card))',
                   border: '1px solid hsl(var(--border))',

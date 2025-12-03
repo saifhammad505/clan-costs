@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { CATEGORIES, FAMILY_MEMBERS, Category, FamilyMember } from "@/types/expense";
+import { CATEGORIES, FAMILY_MEMBERS, SUB_CATEGORIES, Category, FamilyMember } from "@/types/expense";
 import { addExpense } from "@/lib/expense-api";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -44,6 +44,7 @@ const expenseSchema = z.object({
   category: z.enum(CATEGORIES as [Category, ...Category[]], {
     required_error: "Please select a category",
   }),
+  subCategory: z.string().optional(),
   paidBy: z.enum(FAMILY_MEMBERS as [FamilyMember, ...FamilyMember[]], {
     required_error: "Please select who paid",
   }),
@@ -68,8 +69,16 @@ export function ExpenseForm() {
     defaultValues: {
       date: new Date(),
       notes: "",
+      subCategory: "",
     },
   });
+
+  const selectedCategory = useWatch({
+    control: form.control,
+    name: "category",
+  });
+
+  const subCategories = selectedCategory ? SUB_CATEGORIES[selectedCategory] : [];
 
   const mutation = useMutation({
     mutationFn: async (data: ExpenseFormData) => {
@@ -78,6 +87,7 @@ export function ExpenseForm() {
         date: format(data.date, "yyyy-MM-dd"),
         amount: data.amount,
         category: data.category,
+        subCategory: data.subCategory || undefined,
         paidBy: data.paidBy,
         forWhom: data.forWhom,
         notes: data.notes || "",
@@ -150,13 +160,13 @@ export function ExpenseForm() {
             name="amount"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Amount (₹)</FormLabel>
+                <FormLabel>Amount (PKR)</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
-                    step="0.01"
+                    step="1"
                     min="0"
-                    placeholder="0.00"
+                    placeholder="0"
                     {...field}
                   />
                 </FormControl>
@@ -171,7 +181,10 @@ export function ExpenseForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Category</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={(value) => {
+                  field.onChange(value);
+                  form.setValue("subCategory", "");
+                }} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
@@ -181,6 +194,35 @@ export function ExpenseForm() {
                     {CATEGORIES.map((category) => (
                       <SelectItem key={category} value={category}>
                         {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="subCategory"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Sub-Category</FormLabel>
+                <Select 
+                  onValueChange={field.onChange} 
+                  value={field.value}
+                  disabled={!selectedCategory}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder={selectedCategory ? "Select sub-category" : "Select category first"} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {subCategories.map((sub) => (
+                      <SelectItem key={sub} value={sub}>
+                        {sub}
                       </SelectItem>
                     ))}
                   </SelectContent>

@@ -6,6 +6,7 @@ interface ExpenseRow {
   user_id: string;
   date: string;
   category: string;
+  sub_category: string | null;
   amount: number;
   paid_by: string;
   for_whom: string;
@@ -20,6 +21,7 @@ function mapRowToExpense(row: ExpenseRow): Expense {
     timestamp: row.created_at,
     date: row.date,
     category: row.category as Category,
+    subCategory: row.sub_category || undefined,
     amount: Number(row.amount),
     paidBy: row.paid_by as FamilyMember,
     forWhom: row.for_whom as FamilyMember | 'Shared',
@@ -51,6 +53,7 @@ export async function addExpense(
       user_id: userId,
       date: expense.date,
       category: expense.category,
+      sub_category: expense.subCategory,
       amount: expense.amount,
       paid_by: expense.paidBy,
       for_whom: expense.forWhom,
