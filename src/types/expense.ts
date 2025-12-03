@@ -22,14 +22,12 @@ export type Category =
   | 'Misc';
 
 export type FamilyMember =
-  | 'Father'
-  | 'Mother'
-  | 'Saif'
-  | 'Saif Wife'
-  | 'Daughter'
-  | 'Brother'
-  | 'Brother Wife'
-  | 'Kids';
+  | 'Father of House'
+  | 'Mother of House'
+  | 'Hamza Humayun'
+  | 'Saif Hammad'
+  | 'Maryam Rasheed'
+  | 'Asmaa Mehtab';
 
 export const CATEGORIES: Category[] = [
   'Food',
@@ -44,14 +42,12 @@ export const CATEGORIES: Category[] = [
 ];
 
 export const FAMILY_MEMBERS: FamilyMember[] = [
-  'Father',
-  'Mother',
-  'Saif',
-  'Saif Wife',
-  'Daughter',
-  'Brother',
-  'Brother Wife',
-  'Kids',
+  'Father of House',
+  'Mother of House',
+  'Hamza Humayun',
+  'Maryam Rasheed',
+  'Saif Hammad',
+  'Asmaa Mehtab',
 ];
 
 export const SUB_CATEGORIES: Record<Category, string[]> = {
