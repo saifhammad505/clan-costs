@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      bank_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          description: string | null
+          from_member: string | null
+          id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          date?: string
+          description?: string | null
+          from_member?: string | null
+          id?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          description?: string | null
+          from_member?: string | null
+          id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      budgets: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string
+          id: string
+          month: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category?: string | null
+          created_at?: string
+          id?: string
+          month: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          id?: string
+          month?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       expenses: {
         Row: {
           amount: number
@@ -24,6 +87,7 @@ export type Database = {
           id: string
           notes: string | null
           paid_by: string
+          sub_category: string | null
           updated_at: string
           user_id: string
         }
@@ -36,6 +100,7 @@ export type Database = {
           id?: string
           notes?: string | null
           paid_by: string
+          sub_category?: string | null
           updated_at?: string
           user_id: string
         }
@@ -48,6 +113,7 @@ export type Database = {
           id?: string
           notes?: string | null
           paid_by?: string
+          sub_category?: string | null
           updated_at?: string
           user_id?: string
         }

@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Expense, CATEGORY_COLORS } from "@/types/expense";
+import { Expense, CATEGORY_COLORS, formatCurrency } from "@/types/expense";
 import { format, parseISO } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -47,12 +46,13 @@ export function RecentExpenses({ expenses }: RecentExpensesProps) {
                   <div>
                     <p className="font-medium">{expense.category}</p>
                     <p className="text-sm text-muted-foreground">
+                      {expense.subCategory ? `${expense.subCategory} • ` : ''}
                       {expense.paidBy} → {expense.forWhom}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold">₹{expense.amount.toLocaleString('en-IN')}</p>
+                  <p className="font-semibold">{formatCurrency(expense.amount)}</p>
                   <p className="text-sm text-muted-foreground">
                     {format(parseISO(expense.date), 'MMM dd')}
                   </p>

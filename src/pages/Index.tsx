@@ -18,8 +18,12 @@ import { CategoryChart } from "@/components/dashboard/category-chart";
 import { TrendChart } from "@/components/dashboard/trend-chart";
 import { MemberContributions } from "@/components/dashboard/member-contributions";
 import { RecentExpenses } from "@/components/dashboard/recent-expenses";
+import { BankBalanceCard } from "@/components/dashboard/bank-balance-card";
+import { BudgetOverview } from "@/components/dashboard/budget-overview";
 import { getExpenses } from "@/lib/expense-api";
-import { Expense, FAMILY_MEMBERS } from "@/types/expense";
+import { getBudgets } from "@/lib/budget-api";
+import { getBankTransactions, calculateBankBalance } from "@/lib/bank-api";
+import { FAMILY_MEMBERS } from "@/types/expense";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function Index() {
@@ -27,9 +31,23 @@ export default function Index() {
   const [filterMember, setFilterMember] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState<string>("current");
 
+  const currentMonth = format(startOfMonth(new Date()), "yyyy-MM-dd");
+
   const { data: expenses = [], isLoading } = useQuery({
     queryKey: ['expenses'],
     queryFn: getExpenses,
+    enabled: !!user,
+  });
+
+  const { data: budgets = [] } = useQuery({
+    queryKey: ['budgets', currentMonth],
+    queryFn: () => getBudgets(currentMonth),
+    enabled: !!user,
+  });
+
+  const { data: bankTransactions = [] } = useQuery({
+    queryKey: ['bank-transactions'],
+    queryFn: getBankTransactions,
     enabled: !!user,
   });
 
@@ -75,6 +93,10 @@ export default function Index() {
       return date >= start && date <= end;
     });
   }, [expenses]);
+
+  const bankBalance = useMemo(() => {
+    return calculateBankBalance(bankTransactions, expenses);
+  }, [bankTransactions, expenses]);
 
   if (loading) {
     return (
@@ -144,6 +166,12 @@ export default function Index() {
           </div>
         ) : (
           <>
+            {/* Bank Balance & Budget Row */}
+            <div className="mb-6 grid gap-6 md:grid-cols-2">
+              <BankBalanceCard balance={bankBalance} transactions={bankTransactions} />
+              <BudgetOverview budgets={budgets} expenses={filteredExpenses} />
+            </div>
+
             {/* Summary Cards */}
             <SummaryCards
               expenses={filteredExpenses}

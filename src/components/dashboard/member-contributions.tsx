@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Expense, FamilyMember, FAMILY_MEMBERS } from "@/types/expense";
+import { Expense, FamilyMember, FAMILY_MEMBERS, formatCurrency } from "@/types/expense";
 import { Progress } from "@/components/ui/progress";
 import { useMemo } from "react";
 
@@ -55,7 +55,7 @@ export function MemberContributions({ expenses }: MemberContributionsProps) {
             <div className="flex items-center justify-between text-sm">
               <span className="font-medium">{member.name}</span>
               <span className="text-muted-foreground">
-                ₹{member.amount.toLocaleString('en-IN')} ({member.percentage.toFixed(0)}%)
+                {formatCurrency(member.amount)} ({member.percentage.toFixed(0)}%)
               </span>
             </div>
             <Progress 
