@@ -79,9 +79,18 @@ export function BankBalanceCard({ balance, transactions }: BankBalanceCardProps)
     setDescription("");
   };
 
-  const recentDeposits = transactions
-    .filter(t => t.type === 'deposit')
-    .slice(0, 3);
+  const depositsByMember = transactions
+  .filter(t => t.type === "deposit")
+  .reduce((acc, t) => {
+    const member = t.fromMember || "Unknown";
+    acc[member] = (acc[member] || 0) + t.amount;
+    return acc;
+  }, {} as Record<string, number>);
+
+const depositEntries = Object.entries(depositsByMember).sort(
+  (a, b) => b[1] - a[1]
+);
+
 
   return (
     <Card className="glass-card premium-shadow animate-slide-up">
@@ -187,21 +196,25 @@ export function BankBalanceCard({ balance, transactions }: BankBalanceCardProps)
           </Dialog>
         </div>
 
-        {recentDeposits.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-border/50">
-            <p className="text-xs font-medium text-muted-foreground mb-2">Recent Deposits</p>
-            <div className="space-y-1">
-              {recentDeposits.map((t) => (
-                <div key={t.id} className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">
-                    {t.fromMember || 'Unknown'} - {format(new Date(t.date), 'MMM d')}
-                  </span>
-                  <span className="text-success font-medium">+{formatCurrency(t.amount)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {depositEntries.length > 0 && (
+  <div className="mt-4 pt-4 border-t border-border/50">
+    <p className="text-xs font-medium text-muted-foreground mb-2">
+      Total Deposits by Member
+    </p>
+
+    <div className="space-y-1">
+      {depositEntries.map(([member, total]) => (
+        <div key={member} className="flex justify-between text-xs">
+          <span className="text-muted-foreground">{member}</span>
+          <span className="text-success font-medium">
+            +{formatCurrency(total)}
+          </span>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
       </CardContent>
     </Card>
   );
