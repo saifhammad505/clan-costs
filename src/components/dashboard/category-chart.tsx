@@ -1,6 +1,22 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Expense, Category, CATEGORY_COLORS, CATEGORIES, formatCurrency } from "@/types/expense";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  Cell,
+  LabelList,
+} from "recharts";
+import {
+  Expense,
+  Category,
+  CATEGORY_COLORS,
+  CATEGORIES,
+  formatCurrency,
+} from "@/types/expense";
 import { useMemo } from "react";
 
 interface CategoryChartProps {
@@ -9,26 +25,31 @@ interface CategoryChartProps {
 
 export function CategoryChart({ expenses }: CategoryChartProps) {
   const data = useMemo(() => {
-    const categoryTotals: Record<Category, number> = {} as Record<Category, number>;
-    
-    CATEGORIES.forEach((cat) => {
-      categoryTotals[cat] = 0;
+    const totals: Record<Category, number> = {} as Record<Category, number>;
+
+    CATEGORIES.forEach((c) => (totals[c] = 0));
+
+    expenses.forEach((e) => {
+      totals[e.category] += e.amount;
     });
 
-    expenses.forEach((expense) => {
-      categoryTotals[expense.category] += expense.amount;
-    });
-
-    return CATEGORIES
-      .map((category) => ({
-        name: category,
-        value: categoryTotals[category],
-        color: CATEGORY_COLORS[category],
+    const mapped = CATEGORIES
+      .map((c) => ({
+        name: c,
+        amount: totals[c],
+        color: CATEGORY_COLORS[c],
       }))
-      .filter((item) => item.value > 0);
-  }, [expenses]);
+      .filter((d) => d.amount > 0);
 
-  const total = data.reduce((sum, item) => sum + item.value, 0);
+    const totalAmount = mapped.reduce((sum, d) => sum + d.amount, 0);
+
+    return mapped
+      .map((d) => ({
+        ...d,
+        percentage: totalAmount > 0 ? ((d.amount / totalAmount) * 100).toFixed(1) : "0",
+      }))
+      .sort((a, b) => b.amount - a.amount);
+  }, [expenses]);
 
   if (data.length === 0) {
     return (
@@ -44,51 +65,74 @@ export function CategoryChart({ expenses }: CategoryChartProps) {
   }
 
   return (
-    <Card className="glass-card premium-shadow animate-slide-up" style={{ animationDelay: '200ms' }}>
+    <Card className="glass-card premium-shadow animate-slide-up" style={{ animationDelay: "200ms" }}>
       <CardHeader>
         <CardTitle className="text-lg font-semibold">Spending by Category</CardTitle>
       </CardHeader>
+
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={100}
-              paddingAngle={2}
-              dataKey="value"
-              stroke="none"
+        <ResponsiveContainer width="100%" height={330}>
+          <BarChart data={data} margin={{ top: 20, right: 20, left: 0, bottom: 10 }}>
+            <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+
+            <XAxis
+              dataKey="name"
+              tick={{ fill: "hsl(var(--foreground))", fontSize: 12 }}
+              axisLine={false}
+              tickLine={false}
+            />
+
+            <YAxis
+              tick={{ fill: "hsl(var(--foreground))", fontSize: 12 }}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={(value) => formatCurrency(value)}
+            />
+
+            <Tooltip
+              formatter={(value: number, key: any, item: any) => {
+                const row = item.payload;
+                return [
+                  `${formatCurrency(row.amount)}  •  ${row.percentage}%`,
+                  row.name,
+                ];
+              }}
+              contentStyle={{
+                background: "hsl(var(--card))",
+                border: "1px solid hsl(var(--border))",
+                borderRadius: "10px",
+                padding: "10px",
+              }}
+            />
+
+            <Bar
+              dataKey="amount"
+              animationDuration={850}
+              radius={[12, 12, 12, 12]}
             >
               {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
+                <Cell
+                  key={index}
+                  fill={entry.color}
+                  style={{
+                    filter: "drop-shadow(0px 4px 12px rgba(0,0,0,0.15))",
+                    transition: "all 0.3s ease",
+                  }}
+                />
               ))}
-            </Pie>
-            <Tooltip
-              formatter={(value: number) => [formatCurrency(value), '']}
-              contentStyle={{
-                backgroundColor: 'hsl(var(--card))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '8px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-              }}
-            />
-            <Legend
-              layout="vertical"
-              align="right"
-              verticalAlign="middle"
-              formatter={(value, entry: any) => {
-                const item = data.find((d) => d.name === value);
-                const percent = item ? ((item.value / total) * 100).toFixed(0) : 0;
-                return (
-                  <span className="text-sm text-foreground">
-                    {value} ({percent}%)
-                  </span>
-                );
-              }}
-            />
-          </PieChart>
+
+              <LabelList
+                dataKey="amount"
+                formatter={(v: number) => formatCurrency(v)}
+                position="top"
+                style={{
+                  fill: "hsl(var(--foreground))",
+                  fontSize: 11,
+                  fontWeight: 500,
+                }}
+              />
+            </Bar>
+          </BarChart>
         </ResponsiveContainer>
       </CardContent>
     </Card>

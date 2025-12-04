@@ -42,6 +42,19 @@ export default function Index() {
   setDeleteOpen(true);
   };
 
+  const now = new Date();
+
+let monthStart: Date | null = null;
+let monthEnd: Date | null = null;
+
+if (filterMonth === "current") {
+  monthStart = startOfMonth(now);
+  monthEnd = endOfMonth(now);
+} else if (filterMonth === "previous") {
+  const prev = subMonths(now, 1);
+  monthStart = startOfMonth(prev);
+  monthEnd = endOfMonth(prev);
+}
 
 const handleDelete = async (id: string) => {
   const { error } = await supabase.from("expenses").delete().eq("id", id);
@@ -52,7 +65,10 @@ const handleDelete = async (id: string) => {
 
 
 
-  const currentMonth = format(startOfMonth(new Date()), "yyyy-MM-dd");
+  const selectedMonth = filterMonth === "current"
+  ? format(startOfMonth(new Date()), "yyyy-MM-dd")
+  : format(startOfMonth(subMonths(new Date(), 1)), "yyyy-MM-dd");
+
 
 
   const { data: expenses = [], isLoading } = useQuery({
@@ -62,10 +78,11 @@ const handleDelete = async (id: string) => {
   });
 
   const { data: budgets = [] } = useQuery({
-    queryKey: ['budgets', currentMonth],
-    queryFn: () => getBudgets(currentMonth),
-    enabled: !!user,
+  queryKey: ['budgets', selectedMonth],
+  queryFn: () => getBudgets(selectedMonth),
+  enabled: !!user,
   });
+
   
   
 
@@ -74,6 +91,17 @@ const handleDelete = async (id: string) => {
     queryFn: getBankTransactions,
     enabled: !!user,
   });
+
+  
+const filteredBankTransactions = useMemo(() => {
+  if (!monthStart || !monthEnd) return bankTransactions;
+
+  return bankTransactions.filter((t) => {
+    const d = new Date(t.date);
+    return d >= monthStart && d <= monthEnd;
+  });
+}, [bankTransactions, monthStart, monthEnd]);
+
 
   const filteredExpenses = useMemo(() => {
     let result = [...expenses];
@@ -195,7 +223,11 @@ const handleDelete = async (id: string) => {
           <>
             {/* Bank Balance & Budget Row */}
             <div className="mb-6 grid gap-6 md:grid-cols-2">
-              <BankBalanceCard balance={bankBalance} transactions={bankTransactions} />
+              <BankBalanceCard
+                balance={bankBalance}       // full lifetime total
+                transactions={filteredBankTransactions}   // 🔥 month-filtered deposits
+              />
+
               <BudgetOverview budgets={budgets} expenses={filteredExpenses} />
             </div>
 
