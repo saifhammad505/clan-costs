@@ -3,8 +3,11 @@ import { Link, Navigate } from "react-router-dom";
 import { PlusCircle, Filter, Loader2 } from "lucide-react";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { EditExpenseDialog } from "@/components/forms/edit-expense-dialog";
+import { DeleteConfirmDialog } from "@/components/forms/delete-confirm-dialog";
 import { useState } from "react";
-
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -30,8 +33,27 @@ export default function Index() {
   const { user, loading } = useAuth();
   const [filterMember, setFilterMember] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState<string>("current");
+  const queryClient = useQueryClient();  
+  const [editingExpense, setEditingExpense] = useState<any | null>(null);
+  const [expenseToDelete, setExpenseToDelete] = useState<any | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const onRequestDelete = (expense) => {
+  setExpenseToDelete(expense);
+  setDeleteOpen(true);
+  };
+
+
+const handleDelete = async (id: string) => {
+  const { error } = await supabase.from("expenses").delete().eq("id", id);
+  if (!error) {
+    queryClient.invalidateQueries({ queryKey: ["expenses"] });
+  }
+};
+
+
 
   const currentMonth = format(startOfMonth(new Date()), "yyyy-MM-dd");
+
 
   const { data: expenses = [], isLoading } = useQuery({
     queryKey: ['expenses'],
@@ -44,6 +66,8 @@ export default function Index() {
     queryFn: () => getBudgets(currentMonth),
     enabled: !!user,
   });
+  
+  
 
   const { data: bankTransactions = [] } = useQuery({
     queryKey: ['bank-transactions'],
@@ -109,6 +133,9 @@ export default function Index() {
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
+
+
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -187,7 +214,37 @@ export default function Index() {
             {/* Bottom Grid */}
             <div className="mt-6 grid gap-6 lg:grid-cols-2">
               <MemberContributions expenses={filteredExpenses} />
-              <RecentExpenses expenses={filteredExpenses} />
+              <RecentExpenses
+                expenses={filteredExpenses}
+                onEdit={(expense) => setEditingExpense(expense)}
+                onRequestDelete={onRequestDelete}
+              />
+
+              {editingExpense && (
+                <EditExpenseDialog
+                  open={true}
+                  expense={editingExpense}
+                  onClose={() => setEditingExpense(null)}
+                  onUpdated={() =>
+                    queryClient.invalidateQueries({ queryKey: ["expenses"] })
+                  }
+                />
+
+                )}
+
+                <DeleteConfirmDialog
+                open={deleteOpen}
+                onClose={() => setDeleteOpen(false)}
+                onConfirm={async () => {
+                  if (!expenseToDelete) return;
+
+                  await handleDelete(expenseToDelete.id);
+
+                  setDeleteOpen(false);
+                  setExpenseToDelete(null);
+                }}
+              />
+
             </div>
           </>
         )}

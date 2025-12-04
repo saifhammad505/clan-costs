@@ -36,7 +36,7 @@ import { addExpense } from "@/lib/expense-api";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 
-const expenseSchema = z.object({
+export const expenseSchema = z.object({
   date: z.date({
     required_error: "Please select a date",
   }),
@@ -57,7 +57,7 @@ const expenseSchema = z.object({
   notes: z.string().max(500, "Notes must be less than 500 characters").optional(),
 });
 
-type ExpenseFormData = z.infer<typeof expenseSchema>;
+export type ExpenseFormData = z.infer<typeof expenseSchema>;
 
 export function ExpenseForm() {
   const navigate = useNavigate();

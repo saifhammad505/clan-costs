@@ -5,9 +5,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface RecentExpensesProps {
   expenses: Expense[];
+  onEdit: (expense: Expense) => void;
+  onRequestDelete: (expense: Expense) => void;   
 }
 
-export function RecentExpenses({ expenses }: RecentExpensesProps) {
+
+
+export function RecentExpenses({ expenses, onEdit, onRequestDelete }: RecentExpensesProps) {
+
   const recentExpenses = expenses.slice(0, 10);
 
   if (recentExpenses.length === 0) {
@@ -52,11 +57,30 @@ export function RecentExpenses({ expenses }: RecentExpensesProps) {
                   </div>
                 </div>
                 <div className="text-right">
+                
                   <p className="font-semibold">{formatCurrency(expense.amount)}</p>
                   <p className="text-sm text-muted-foreground">
                     {format(parseISO(expense.date), 'MMM dd')}
                   </p>
                 </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => onEdit(expense)}
+                    className="text-blue-500 hover:text-blue-700 text-sm font-medium"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    onClick={() => onRequestDelete(expense)}
+                    className="text-red-500 hover:text-red-700 text-sm font-medium"
+                  >
+                    Delete
+                  </button>
+
+                </div>
+
+
               </div>
             ))}
           </div>
